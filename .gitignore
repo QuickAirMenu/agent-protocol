@@ -1,0 +1,26 @@
+# Environment
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Data
+zoe-app/data/
+
+# Cache
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup
+*.sql.gz
+*.tar
+*.zip
