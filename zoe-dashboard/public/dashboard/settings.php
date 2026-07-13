@@ -7,9 +7,12 @@ require_once __DIR__ . '/../includes/layout.php';
 
 requireAdmin();
 $base = getenv('APP_URL') ?: '';
-$envPath = dirname(__DIR__, 2) . '/.env';
+$envPath = dirname(__DIR__) . '/.env';
+if (!file_exists($envPath)) {
+    $envPath = dirname(__DIR__, 2) . '/.env';
+}
 
-function loadEnv($path) {
+function readEnvFile($path) {
     $env = [];
     if (file_exists($path)) {
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -32,10 +35,10 @@ function saveEnv($path, $env) {
     file_put_contents($path, implode("\n", $lines) . "\n");
 }
 
-$env = loadEnv($envPath);
+$env = readEnvFile($envPath);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrfCheck();
+    verifyCsrf();
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
@@ -44,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $env['DEEPSEEK_KEY'] = trim($_POST['deepseek_key'] ?? '');
             $env['ADMIN_CHAT_ID'] = trim($_POST['admin_chat_id'] ?? '');
             saveEnv($envPath, $env);
-            flash('Bot settings saved.', 'success');
+            setFlash('Bot settings saved.', 'success');
             break;
 
         case 'update_profile':
@@ -53,9 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE users SET full_name = ? WHERE id = ?");
                 $stmt->execute([$fullName, $_SESSION['user_id']]);
                 $_SESSION['full_name'] = $fullName;
-                flash('Profile updated.', 'success');
+                setFlash('Profile updated.', 'success');
             } else {
-                flash('Full name cannot be empty.', 'error');
+                setFlash('Full name cannot be empty.', 'error');
             }
             break;
 
@@ -64,28 +67,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newPassword = $_POST['new_password'] ?? '';
             $confirmPassword = $_POST['confirm_password'] ?? '';
 
-            $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
             $stmt->execute([$_SESSION['user_id']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$user || !password_verify($currentPassword, $user['password'])) {
-                flash('Current password is incorrect.', 'error');
+            if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
+                setFlash('Current password is incorrect.', 'error');
                 break;
             }
 
             if ($newPassword !== $confirmPassword) {
-                flash('New passwords do not match.', 'error');
+                setFlash('New passwords do not match.', 'error');
                 break;
             }
 
             if (strlen($newPassword) < 6) {
-                flash('Password must be at least 6 characters.', 'error');
+                setFlash('Password must be at least 6 characters.', 'error');
                 break;
             }
 
-            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
             $stmt->execute([password_hash($newPassword, PASSWORD_DEFAULT), $_SESSION['user_id']]);
-            flash('Password changed successfully.', 'success');
+            setFlash('Password changed successfully.', 'success');
             break;
     }
 

@@ -5,6 +5,10 @@ function e(?string $str): string {
     return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+function h(?string $str): string {
+    return e($str);
+}
+
 function redirect(string $url): never {
     header("Location: $url");
     exit;
@@ -21,6 +25,14 @@ function getFlash(): ?array {
         return $flash;
     }
     return null;
+}
+
+function flashMessage(): void {
+    $flash = getFlash();
+    if ($flash) {
+        $type = $flash['type'] === 'error' ? 'error' : 'success';
+        echo '<div class="flash flash-' . $type . '">' . e($flash['message']) . '</div>';
+    }
 }
 
 function formatDate(?string $date): string {

@@ -22,7 +22,7 @@ $recentTasks = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $recentUsers = $pdo->query("
-    SELECT id, name, username, role, created_at
+    SELECT id, full_name, username, role, created_at
     FROM users
     ORDER BY created_at DESC
     LIMIT 5
@@ -90,7 +90,7 @@ $recentUsers = $pdo->query("
             <tbody>
                 <?php foreach ($recentUsers as $u): ?>
                     <tr>
-                        <td><?= h($u['name']) ?></td>
+                        <td><?= h($u['full_name']) ?></td>
                         <td><?= h($u['username']) ?></td>
                         <td><span class="badge badge-<?= $u['role'] ?>"><?= ucfirst(h($u['role'])) ?></span></td>
                     </tr>

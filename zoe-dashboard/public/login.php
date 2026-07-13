@@ -14,12 +14,12 @@ if (isLoggedIn()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verifyCsrf($_POST);
+    verifyCsrf();
 
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if (loginUser($username, $password)) {
+    if (loginUser($username, $password, $pdo)) {
         header('Location: ' . $base . '/dashboard');
         exit;
     }

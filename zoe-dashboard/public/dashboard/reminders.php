@@ -9,7 +9,8 @@ $base = getenv('APP_URL') ?: '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    if ($action === 'add' && verifyCsrf($_POST)) {
+    if ($action === 'add') {
+        verifyCsrf();
         $message = trim($_POST['message'] ?? '');
         $remindAt = $_POST['remind_at'] ?? '';
         $recurring = $_POST['recurring'] ?? 'none';
@@ -18,7 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$message, $remindAt, $recurring]);
             setFlash('تمت إضافة التذكير بنجاح', 'success');
         }
-    } elseif ($action === 'delete' && verifyCsrf($_POST)) {
+    } elseif ($action === 'delete') {
+        verifyCsrf();
         $id = (int)($_POST['id'] ?? 0);
         if ($id) {
             $stmt = $pdo->prepare('DELETE FROM reminders WHERE id = ?');
@@ -32,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $reminders = $pdo->query('SELECT * FROM reminders ORDER BY remind_at ASC')->fetchAll();
 $recurringLabels = ['none' => 'مرة', 'daily' => 'يومي', 'weekly' => 'أسبوعي', 'monthly' => 'شهري'];
 
-renderHeader($pageTitle, $base);
 ?>
 
 <div class="page-header">

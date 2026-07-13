@@ -9,7 +9,8 @@ $base = getenv('APP_URL') ?: '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    if ($action === 'add' && verifyCsrf($_POST)) {
+    if ($action === 'add') {
+        verifyCsrf();
         $competition = trim($_POST['competition'] ?? '');
         $teamHome = trim($_POST['team_home'] ?? '');
         $teamAway = trim($_POST['team_away'] ?? '');
@@ -22,7 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$competition, $teamHome, $teamAway, $matchDate, $status, $scoreHome, $scoreAway]);
             setFlash('تمت إضافة المباراة بنجاح', 'success');
         }
-    } elseif ($action === 'delete' && verifyCsrf($_POST)) {
+    } elseif ($action === 'delete') {
+        verifyCsrf();
         $id = (int)($_POST['id'] ?? 0);
         if ($id) {
             $stmt = $pdo->prepare('DELETE FROM matches WHERE id = ?');
@@ -47,7 +49,6 @@ $matches = $pdo->query("SELECT * FROM matches $where ORDER BY match_date DESC")-
 $statusLabels = ['scheduled' => 'قادمة', 'live' => 'مباشر', 'finished' => 'انتهت'];
 $statusClasses = ['scheduled' => 'badge-gold', 'live' => 'badge-red', 'finished' => 'badge-success'];
 
-renderHeader($pageTitle, $base);
 ?>
 
 <div class="page-header">

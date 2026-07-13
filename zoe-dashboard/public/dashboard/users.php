@@ -9,7 +9,7 @@ requireAdmin();
 $base = getenv('APP_URL') ?: '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrfCheck();
+    verifyCsrf();
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
@@ -20,20 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $role = $_POST['role'] ?? 'viewer';
 
             if ($username === '' || $password === '' || $fullName === '') {
-                flash('All fields are required.', 'error');
+                setFlash('All fields are required.', 'error');
                 break;
             }
 
             $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
             $stmt->execute([$username]);
             if ($stmt->fetch()) {
-                flash('Username already exists.', 'error');
+                setFlash('Username already exists.', 'error');
                 break;
             }
 
-            $stmt = $pdo->prepare("INSERT INTO users (username, password, full_name, role, active) VALUES (?, ?, ?, ?, 1)");
+            $stmt = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, 1)");
             $stmt->execute([$username, password_hash($password, PASSWORD_DEFAULT), $fullName, $role]);
-            flash('User created successfully.', 'success');
+            setFlash('User created successfully.', 'success');
             break;
 
         case 'update_role':
@@ -42,16 +42,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($userId && in_array($newRole, ['admin', 'editor', 'viewer'])) {
                 $stmt = $pdo->prepare("UPDATE users SET role = ? WHERE id = ?");
                 $stmt->execute([$newRole, $userId]);
-                flash('Role updated.', 'success');
+                setFlash('Role updated.', 'success');
             }
             break;
 
         case 'toggle_active':
             $userId = (int)($_POST['user_id'] ?? 0);
             if ($userId) {
-                $stmt = $pdo->prepare("UPDATE users SET active = NOT active WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE users SET is_active = NOT is_active WHERE id = ?");
                 $stmt->execute([$userId]);
-                flash('User status toggled.', 'success');
+                setFlash('User status toggled.', 'success');
             }
             break;
 
@@ -59,24 +59,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = (int)($_POST['user_id'] ?? 0);
             $newPassword = $_POST['new_password'] ?? '';
             if ($userId && strlen($newPassword) >= 6) {
-                $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
                 $stmt->execute([password_hash($newPassword, PASSWORD_DEFAULT), $userId]);
-                flash('Password reset successfully.', 'success');
+                setFlash('Password reset successfully.', 'success');
             } else {
-                flash('Password must be at least 6 characters.', 'error');
+                setFlash('Password must be at least 6 characters.', 'error');
             }
             break;
 
         case 'delete':
             $userId = (int)($_POST['user_id'] ?? 0);
             if ($userId === $_SESSION['user_id']) {
-                flash('You cannot delete your own account.', 'error');
+                setFlash('You cannot delete your own account.', 'error');
                 break;
             }
             if ($userId) {
                 $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
                 $stmt->execute([$userId]);
-                flash('User deleted.', 'success');
+                setFlash('User deleted.', 'success');
             }
             break;
     }
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$usersStmt = $pdo->query("SELECT id, username, full_name, role, active, last_login FROM users ORDER BY id ASC");
+$usersStmt = $pdo->query("SELECT id, username, full_name, role, is_active, last_login FROM users ORDER BY id ASC");
 $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -127,8 +127,8 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="toggle_active">
                     <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                    <button type="submit" class="badge <?= $u['active'] ? 'badge-success' : 'badge-error' ?>">
-                        <?= $u['active'] ? 'Active' : 'Inactive' ?>
+                    <button type="submit" class="badge <?= $u['is_active'] ? 'badge-success' : 'badge-error' ?>">
+                        <?= $u['is_active'] ? 'Active' : 'Inactive' ?>
                     </button>
                 </form>
             </td>
