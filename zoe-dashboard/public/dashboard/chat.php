@@ -4,16 +4,18 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../includes/deepseek.php';
-require_once __DIR__ . '/../includes/layout.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 requireLogin();
-$base = getenv('APP_URL') ?: '';
 $userId = $_SESSION['user_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
 
-    if (!isset($_SERVER['HTTP_X_CSRF_TOKEN']) || $_SERVER['HTTP_X_CSRF_TOKEN'] !== $_SESSION['csrf_token']) {
+    if (!isset($_SERVER['HTTP_X_CSRF_TOKEN']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) {
         http_response_code(403);
         echo json_encode(['error' => 'Invalid CSRF token']);
         exit;
@@ -39,11 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$userId, $message]);
 
     try {
-        $historyStmt = $pdo->prepare("SELECT role, content FROM chat_history WHERE user_id = ? ORDER BY created_at ASC");
-        $historyStmt->execute([$userId]);
-        $history = $historyStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $response = getDeepSeek()->withHistory($history);
+        $response = getDeepSeek()->withHistory($userId, $message, $pdo);
 
         $stmt = $pdo->prepare("INSERT INTO chat_history (user_id, role, content) VALUES (?, 'assistant', ?)");
         $stmt->execute([$userId, $response]);
@@ -54,6 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     exit;
 }
+
+require_once __DIR__ . '/../includes/layout.php';
 
 $historyStmt = $pdo->prepare("SELECT role, content, created_at FROM chat_history WHERE user_id = ? ORDER BY created_at ASC");
 $historyStmt->execute([$userId]);

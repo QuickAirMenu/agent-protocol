@@ -4,7 +4,7 @@
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/telegram.php';
-require_once dirname(__DIR__, 2) . '/shared/includes/helpers.php';
+require_once dirname(__DIR__) . '/shared/includes/helpers.php';
 
 $tg = getTelegram();
 
