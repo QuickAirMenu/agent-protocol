@@ -7,9 +7,9 @@
 
 ## 2. Rotate Exposed Credentials
 These credentials were exposed in git history and need rotation:
-- **Bot Token:** `8843357099:AAESNs6q7ZeQBPWehmYtU-UacjzwAE7ikfs`
-- **DB Password:** `Admin#4Ksa`
-- **DeepSeek API Key:** `sk-7be6a1b961c04223a15e7fcd6638d2e5`
+- **Bot Token:** (was exposed — revoke via @BotFather)
+- **DB Password:** (was exposed — change in MariaDB)
+- **DeepSeek API Key:** (was exposed — regenerate at https://platform.deepseek.com)
 
 ### How to rotate:
 1. **Bot Token:** Message @BotFather → `/revoke` → new token → update `.env`
